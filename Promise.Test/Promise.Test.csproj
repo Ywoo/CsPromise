@@ -50,12 +50,20 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Promise225Test.cs" />
+    <Compile Include="Promise224Test.cs" />
+    <Compile Include="Promise223Test.cs" />
+    <Compile Include="Promise222Test.cs" />
+    <Compile Include="Promise221Test.cs" />
+    <Compile Include="Promise213Test.cs" />
     <Compile Include="Promise226Test.cs" />
     <Compile Include="Promise227Test.cs" />
     <Compile Include="Promise231Test.cs" />
     <Compile Include="Promise232Test.cs" />
     <Compile Include="Promise233Test.cs" />
+    <Compile Include="Promise212Test.cs" />
     <Compile Include="Promise234Test.cs" />
+    <Compile Include="BasePromiseTest.cs" />
     <Compile Include="PromiseTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

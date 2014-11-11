@@ -202,7 +202,7 @@ namespace Ghost.Test
         private void CheckSettled(Promise promise, Action resolveAction, bool fulfilled) {
             var onFulfilledCalled = false;
 
-            promise.Then(
+            var waitedPromise = promise.Then(
                 (result) => {
                     onFulfilledCalled = true;
                 },
@@ -215,7 +215,7 @@ namespace Ghost.Test
                 resolveAction();
             }
 
-            Assert.AreEqual(promise.Wait(), fulfilled);
+            Assert.AreEqual(waitedPromise.Wait(), fulfilled);
 
             Assert.AreEqual(onFulfilledCalled, fulfilled);
         }

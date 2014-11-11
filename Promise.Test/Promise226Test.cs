@@ -14,9 +14,7 @@ namespace Ghost.Test
     ///PromiseTest 단위 테스트를 모두 포함합니다.
     ///</summary>
     [TestClass()]
-    public class Promise226Test {
-
-
+    public class Promise226Test : BasePromiseTest {
         private TestContext testContextInstance;
 
         /// <summary>
@@ -109,106 +107,123 @@ namespace Ghost.Test
             }
         }
 
+        Object sentinel = new object();
+        Object sentinel2 = new Object();
+        Object sentinel3 = new object();
+
+        Action CallbackAggregator(int times, Action ultimateCallback) {
+            var soFar = 0;
+
+            return new Action(() => {
+                if (++soFar == times) {
+                    ultimateCallback();
+                }
+            });
+        }
+
         // 2.2.6: `then` may be called multiple times on the same promise.
         // 2.2.6.1: If/when `promise` is fulfilled, all respective `onFulfilled` callbacks 
         // must execute in the order of their originating calls to `then`.
         [TestMethod()]
         public void MultipleFulfillHanderTest() {
-            var promise = new Promise<Object>();
+            TestFulfilled(sentinel, (promise) => {
+                var handler1 = new Call();
+                var handler2 = new Call();
+                var handler3 = new Call();
+                var rejectHandler = new Call();
+                var called = false;
 
-            var handler1 = new Call();
-            var handler2 = new Call();
-            var handler3 = new Call();
-            var rejectHandler = new Call();
+                promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
 
-            promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then(
+                    (result) => {
 
-            var resultObj = new object();
+                        Assert.AreEqual(sentinel, result);
 
-            promise.Then(
-                (result) => {
-                    Assert.AreEqual(resultObj, result);
+                        Assert.AreEqual(sentinel, handler1.Result);
+                        Assert.AreEqual(sentinel, handler2.Result);
+                        Assert.AreEqual(sentinel, handler3.Result);
 
-                    Assert.AreEqual(resultObj, handler1.Result);
-                    Assert.AreEqual(resultObj, handler2.Result);
-                    Assert.AreEqual(resultObj, handler3.Result);
+                        Assert.AreEqual(false, rejectHandler.IsCalled);
 
-                    Assert.AreEqual(false, rejectHandler.IsCalled);
-                }
-            );
+                        called = true;
+                    }
+                );
 
-            promise.Resolve(resultObj);
-
-            promise.Wait();
+                SetTimeout(() => Assert.IsTrue(called), 100);
+            });
         }
 
         // multiple fulfillment handlers, one of which throws
         [TestMethod()]
         public void MultipleFulfillHanderOneThrowsTest() {
-            var promise = new Promise<Object>();
+            TestFulfilled(sentinel, (promise) => {
+                var handler1 = new Call();
+                var handler2 = new Call();
+                var handler3 = new Call();
+                var rejectHandler = new Call();
 
-            var handler1 = new Call();
-            var handler2 = new Call();
-            var handler3 = new Call();
-            var rejectHandler = new Call();
+                var called = false;
 
-            promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillThrowsHander, rejectHandler.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillThrowsHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
 
-            var resultObj = new object();
+                promise.Then(
+                    (result) => {
+                        Assert.AreEqual(sentinel, result);
 
-            promise.Then(
-                (result) => {
-                    Assert.AreEqual(resultObj, result);
+                        Assert.AreEqual(sentinel, handler1.Result);
+                        Assert.AreEqual(sentinel, handler2.Result);
+                        Assert.AreEqual(sentinel, handler3.Result);
 
-                    Assert.AreEqual(resultObj, handler1.Result);
-                    Assert.AreEqual(resultObj, handler2.Result);
-                    Assert.AreEqual(resultObj, handler3.Result);
+                        Assert.AreEqual(false, rejectHandler.IsCalled);
 
-                    Assert.AreEqual(false, rejectHandler.IsCalled);
-                }
-            );
+                        called = true;
+                    }
+                );
 
-            promise.Resolve(resultObj);
-
-            promise.Wait();
+                SetTimeout(() => Assert.IsTrue(called), 100);
+            });
         }
 
         // results in multiple branching chains with their own fulfillment values
         [TestMethod()]
         public void MultipleChainedFulfillHanderTest() {
-            var promise = new Promise<Object>();
+            TestFulfilled(dummy_, (promise) => {
+                var called = false;
 
-            var resultObj = new object();
+                var semiDone = CallbackAggregator(3, () => called = true);
 
-            var sentinel1 = new Object();
-            var sentinel2 = new Object();
-            var sentinel3 = new Object();
+                var sentinel1 = new Object();
+                var sentinel2 = new Object();
+                var sentinel3 = new Object();
 
-            promise.Then((result) => {
-                return sentinel1;
-            }).Then((result) => {
-                Assert.AreEqual(sentinel1, result);
+                promise.Then((result) => {
+                    return sentinel1;
+                }).Then((result) => {
+                    Assert.AreEqual(sentinel1, result);
+                    semiDone();
+                });
+
+                promise.Then((result) => {
+                    return sentinel2;
+                }).Then((result) => {
+                    Assert.AreEqual(sentinel2, result);
+                    semiDone();
+                });
+
+                promise.Then((result) => {
+                    return sentinel3;
+                }).Then((result) => {
+                    Assert.AreEqual(sentinel3, result);
+                    semiDone();
+                });
+
+                SetTimeout(() => Assert.IsTrue(called), 100);
             });
-
-            promise.Then((result) => {
-                return sentinel2;
-            }).Then((result) => {
-                Assert.AreEqual(sentinel2, result);
-            });
-
-            promise.Then((result) => {
-                return sentinel3;
-            }).Then((result) => {
-                Assert.AreEqual(sentinel3, result);
-            });                
-
-            promise.Resolve(resultObj);
-
-            promise.Wait();
         }
 
         // "`onFulfilled` handlers are called in the original order
@@ -217,7 +232,7 @@ namespace Ghost.Test
             var promise = new Promise<Object>();
             var callOrder = 0;
 
-            promise.Then(
+            var waitedPromise = promise.Then(
                 (result) => {
                     Assert.AreEqual(0, callOrder);
                     callOrder = 1;
@@ -235,7 +250,7 @@ namespace Ghost.Test
             );
 
             promise.Resolve(new Object());
-            promise.Wait();
+            waitedPromise.Wait();
 
             Assert.AreEqual(3, callOrder);
         }
@@ -265,9 +280,7 @@ namespace Ghost.Test
             );
 
             promise.Resolve(new Object());
-            promise.Wait();
-
-            Assert.AreEqual(3, callOrder);
+            SetTimeout(() => Assert.AreEqual(3, callOrder), 50);
         }
 
         // 2.2.6.2: If/when `promise` is rejected, all respective `onRejected` callbacks must execute in the 
@@ -287,7 +300,7 @@ namespace Ghost.Test
 
             var resultObj = new Exception();
 
-            promise.Then(
+            var waitedPromise = promise.Then(
                 (result) => {
                     Assert.AreEqual(resultObj, result);
 
@@ -301,7 +314,7 @@ namespace Ghost.Test
 
             promise.Reject(resultObj);
 
-            promise.Wait();
+            waitedPromise.Wait();
         }
 
         // multiple rejection handlers, one of which throws
@@ -320,7 +333,7 @@ namespace Ghost.Test
 
             var resultObj = new Exception();
 
-            promise.Then(
+            var waitedPromise = promise.Then(
                 (result) => {
                     Assert.AreEqual(resultObj, result);
 
@@ -334,7 +347,7 @@ namespace Ghost.Test
 
             promise.Reject(resultObj);
 
-            promise.Wait();
+            waitedPromise.Wait();
         }
 
         // results in multiple branching chains with their own fulfillment values
