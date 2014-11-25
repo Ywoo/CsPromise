@@ -14,7 +14,7 @@ namespace Ghost.Test
     ///PromiseTest 단위 테스트를 모두 포함합니다.
     ///</summary>
     [TestClass()]
-    public class Promise231Test : BasePromiseTest {
+    public class PromiseDebugTest {
 
 
         private TestContext testContextInstance;
@@ -62,50 +62,35 @@ namespace Ghost.Test
         //
         #endregion
 
+        public class DerivedClass : Promise<String> {
+            public DerivedClass() {
 
-        // 2.3.1: If `promise` and `x` refer to the same object, reject `promise` with a `TypeError' as the reason.
+            }
+        }
+
         [TestMethod()]
-        public void ThrowExceptionInHandlerMakeRejectedTest() {
-            Exception sentException = null;
+        public void ThenLinkSourceTest() {
+            var promise1 = new Promise<String>();
 
-            PromiseTest.TestFulfilled<Object>(new Object(), promise => {
-                object thenPromise = null;
-                thenPromise = promise.Then(
-                    result => thenPromise
-                );
-                
-                ((Promise)thenPromise).Then(
-                    null,
-                    (exception) => {
-                        sentException = exception;
-                    }
-                );
-            });
+            Promise promise3 = null;
 
-            SetTimeout(() =>
-                Assert.AreEqual("Type error. The resolved result is same as the promise.",
-                sentException.Message), 50);
+            var promise2 = promise1.Then((result) => {
+                promise3 = new DerivedClass();
 
-            sentException = null;
+                promise3.Resolve(null);
+                return promise3;
+            }, null);
 
-            PromiseTest.TestRejected<Object>(new Exception(), promise => {
-                object thenPromise = null;
+            Assert.AreEqual(promise1, promise2.GetSourcePromise());
 
-                thenPromise = promise.Then(null,
-                    exception => thenPromise
-                );
+            promise1.Resolve(null);
 
-                ((Promise)thenPromise).Then(
-                    null,
-                    (exception) => {
-                        sentException = exception;
-                    }
-                );
-            });
+            Thread.Sleep(1000);
 
-            SetTimeout(() =>
-                Assert.AreEqual("Type error. The resolved result is same as the promise.",
-                sentException.Message), 50);
+            Assert.IsNotNull(promise3);
+
+            Assert.AreEqual(promise3, promise2.GetSourcePromise());
+            Assert.AreEqual(promise1, promise3.GetSourcePromise());
         }
     }
-}
+ }

@@ -84,11 +84,11 @@ namespace Ghost.Test
 
             var timer = new System.Timers.Timer(timeout);
 
-
             timer.AutoReset = false;
-            timer.Elapsed += (sender, e) => callback();
-
+            
             RegisterTimer(timer);
+
+            timer.Elapsed += (sender, e) => callback();
 
             timer.Start();
         }

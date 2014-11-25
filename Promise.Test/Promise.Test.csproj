@@ -64,6 +64,7 @@
     <Compile Include="Promise212Test.cs" />
     <Compile Include="Promise234Test.cs" />
     <Compile Include="BasePromiseTest.cs" />
+    <Compile Include="PromiseDebugTest.cs" />
     <Compile Include="PromiseTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

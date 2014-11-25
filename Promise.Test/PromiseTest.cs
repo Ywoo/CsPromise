@@ -14,7 +14,7 @@ namespace Ghost.Test
     ///PromiseTest 단위 테스트를 모두 포함합니다.
     ///</summary>
     [TestClass()]
-    public class PromiseTest {
+    public class PromiseTest : BasePromiseTest{
 
 
         private TestContext testContextInstance;
@@ -122,11 +122,13 @@ namespace Ghost.Test
 
             resolveAction("Echo");
 
-            Assert.AreEqual(false, promise.Wait());
+            SetTimeout(() => {
+                Assert.AreEqual(false, promise.Wait());
 
-            Assert.AreEqual("Echo", firstResult);
-            Assert.AreEqual("Echo Test", secondResult);
-            Assert.AreEqual("test for catch", message);
+                Assert.AreEqual("Echo", firstResult);
+                Assert.AreEqual("Echo Test", secondResult);
+                Assert.AreEqual("test for catch", message);
+            }, 50);   
         }
 
         [TestMethod()]
@@ -318,7 +320,7 @@ namespace Ghost.Test
             });
 
             CheckSettled(promise, null, false);
-            Assert.IsTrue(rejectedCalled);
+            SetTimeout(() => Assert.IsTrue(rejectedCalled), 50);
         }
 
         [TestMethod()]
@@ -333,7 +335,7 @@ namespace Ghost.Test
             });
 
             CheckSettled(promise, null, false);
-            Assert.IsTrue(rejectedCalled);
+            SetTimeout(() => Assert.IsTrue(rejectedCalled), 50);
         }
 
         // 2.2.1.2: If `onRejected` is not a function, it must be ignored.
@@ -344,7 +346,7 @@ namespace Ghost.Test
 
             promise.Then((result) => {
                 fulfilledCalled = true;
-            }, null);
+            }, null).Wait();
 
             CheckSettled(promise, null, true);
             Assert.IsTrue(fulfilledCalled);
@@ -356,12 +358,13 @@ namespace Ghost.Test
             var fulfilledCalled = false;
 
             promise.Then(
-                null, (e) => {}
+                null, (e) => {
+                }
             ).Then(
                 (result) => {
                     fulfilledCalled = true;
-                }, 
-                null);
+                },
+                null).Wait();
 
             CheckSettled(promise, null, true);
             Assert.IsTrue(fulfilledCalled);

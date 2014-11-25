@@ -31,3 +31,6 @@ creating one more API (Wait) and not supporting
 for not invoking thread, I did not support delayed 'onFulfilled' or 
 'onRejected' call. If you want
 delayed call, set Promise.asyncHander_ as true.
+
+## Comparison of TAP and Promise.
+

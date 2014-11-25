@@ -410,7 +410,7 @@ namespace Ghost.Test
             promise.Reject(new Exception());
             promise.Wait();
 
-            Assert.AreEqual(3, callOrder);
+            SetTimeout(() => Assert.AreEqual(3, callOrder), 50);
         }
 
         // even when one handler is added inside another handler
@@ -438,9 +438,8 @@ namespace Ghost.Test
             );
 
             promise.Reject(new Exception());
-            promise.Wait();
-
-            Assert.AreEqual(3, callOrder);
+            
+            SetTimeout(() => Assert.AreEqual(3, callOrder), 50);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Ghost.Test
     ///PromiseTest 단위 테스트를 모두 포함합니다.
     ///</summary>
     [TestClass()]
-    public class Promise227Test {
+    public class Promise227Test : BasePromiseTest {
 
 
         private TestContext testContextInstance;
@@ -86,7 +86,8 @@ namespace Ghost.Test
                 );
             });
 
-            Assert.AreEqual(expectedException, sentException);
+            SetTimeout(() =>
+                Assert.AreEqual(expectedException, sentException), 50);
 
             sentException = null;
 
@@ -103,7 +104,8 @@ namespace Ghost.Test
                 );
             });
 
-            Assert.AreEqual(expectedException, sentException);
+            SetTimeout(() =>
+                Assert.AreEqual(expectedException, sentException), 50);
         }
 
         // 2.2.7.3: If `onFulfilled` is not a function and `promise1` is fulfilled, `promise2` must be fulfilled
@@ -123,7 +125,8 @@ namespace Ghost.Test
                 );
             });
 
-            Assert.AreEqual(expectedResult, sentResult);
+            SetTimeout(() =>
+                Assert.AreEqual(expectedResult, sentResult), 50);
         }
 
         // 2.2.7.4: If `onRejected` is not a function and `promise1` is rejected, `promise2` must be rejected 
@@ -145,7 +148,8 @@ namespace Ghost.Test
                 );
             });
 
-            Assert.AreEqual(expectedException, sentException);
+            SetTimeout(() => Assert.AreEqual(expectedException, sentException),
+                50);
         }
     }
 }
