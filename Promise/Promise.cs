@@ -1,4 +1,4 @@
-﻿// #define ASYNC_THEN_CALL
+﻿#define ASYNC_THEN_CALL
 
 using System;
 using System.Collections.Generic;

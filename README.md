@@ -20,17 +20,22 @@ for promises pattern. check following two url.
  * <https://www.promisejs.org/>
  * <https://github.com/promises-aplus>
 
-those codes was written by refering <https://www.promisejs.org/implementing/>
+These codes was written by refering <https://www.promisejs.org/implementing/>
 
 by comparing the standard. I implemented pattern by using generic,
-creating one more API (Wait) and not supporting 
-    '2.2.4 : `onFulfilled` or `onRejected` must not be called until 
-            the execution context stack contains only platform code' 
-        by default.
-       
-for not invoking thread, I did not support delayed 'onFulfilled' or 
-'onRejected' call. If you want
-delayed call, set Promise.asyncHander_ as true.
+creating one some API for c# framework (Wait, AsyncCall) 
 
-## Comparison of TAP and Promise.
+## Some additional feature
 
+### Synchronous method call
+If you want to call the 'then' method in same thread, undefine the 
+'ASYNC_THE_CALL'
+
+### Additional function for EAP. (IAsyncResult)
+
+``
+Promise<IPHostEntry> promise = PromiseExtensions.CallAsync<IPHostEntry>(
+    (callback) => Dns.BeginGetHostEntry(host, callback, null),
+    (result) => Dns.EndGetHostEntry(result)
+);
+``
