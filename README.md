@@ -29,7 +29,7 @@ creating one some API for c# framework (Wait, AsyncCall)
 
 ### Synchronous method call
 If you want to call the 'then' method in same thread, undefine the 
-`ASYNC_THE_CALL`
+`ASYNC_THEN_CALL`
 
 ### Additional function for EAP. (IAsyncResult)
 
