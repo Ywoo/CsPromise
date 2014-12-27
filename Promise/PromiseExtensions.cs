@@ -65,7 +65,7 @@ namespace CsPromise {
             return promise;
         }
 
-        public static Promise<T> CallAsync<T>(
+        public static Promise<T> CreatePromiseFromIAsyncResult<T>(
             Func<AsyncCallback, IAsyncResult> beginFunc,
             Func<IAsyncResult, T> endFunc) {
 

@@ -67,7 +67,7 @@ namespace CsPromise.Test
         #endregion
 
         private Promise<IPHostEntry> GetPromiseForGetHostEntry(String host) {
-            return PromiseExtensions.CallAsync<IPHostEntry>(
+            return PromiseExtensions.CreatePromiseFromIAsyncResult<IPHostEntry>(
                 (callback) => Dns.BeginGetHostEntry(host, callback,
                     null),
                 (result) => Dns.EndGetHostEntry(result));

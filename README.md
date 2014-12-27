@@ -33,8 +33,11 @@ it. You should define it for passing unit test (promise specification)
 I added two functions which can be used for EAP. see following the example.
 
 ```
-Promise<IPHostEntry> promise = PromiseExtensions.CallAsync<IPHostEntry>(
+PromiseExtensions.CreatePromiseFromIAsyncResult<IPHostEntry>(
     (callback) => Dns.BeginGetHostEntry(host, callback, null),
     (result) => Dns.EndGetHostEntry(result)
-);
+)
+.Then((entry) => {
+   ....
+}
 ```
