@@ -29,13 +29,13 @@ creating one some API for c# framework (Wait, AsyncCall)
 
 ### Synchronous method call
 If you want to call the 'then' method in same thread, undefine the 
-'ASYNC_THE_CALL'
+`ASYNC_THE_CALL`
 
 ### Additional function for EAP. (IAsyncResult)
 
-``
+```
 Promise<IPHostEntry> promise = PromiseExtensions.CallAsync<IPHostEntry>(
     (callback) => Dns.BeginGetHostEntry(host, callback, null),
     (result) => Dns.EndGetHostEntry(result)
 );
-``
+```
