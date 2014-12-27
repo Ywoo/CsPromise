@@ -1,7 +1,4 @@
-﻿#define PROMISE_DEBUG
-#define ASYNC_THEN_CALL
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -54,6 +51,9 @@ namespace CsPromise {
             return promise;
         }
 
+        /*
+          Promise extension for EAP. 
+         */
         public static Promise<IAsyncResult> Begin(
             this Promise<IAsyncResult> promise,
             Func<AsyncCallback, IAsyncResult> beginFunc) {
@@ -64,10 +64,6 @@ namespace CsPromise {
 
             return promise;
         }
-
-        /*
-          Promise extension for EAP. 
-         */
 
         public static Promise<T> CallAsync<T>(
             Func<AsyncCallback, IAsyncResult> beginFunc,

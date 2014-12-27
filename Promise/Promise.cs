@@ -6,14 +6,14 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
+//
+// Promise pattern for c#
+//
 namespace CsPromise {
     // TODO 
-    // 1. logging feature
+    // 1. logging feature for debugging.
     // 2. comparing the performance of TAP and Promise.
 
-    /*
-      Promise pattern for c#
-     */
 
     public class Promise {
         public enum States {
@@ -185,9 +185,6 @@ namespace CsPromise {
             return promise;
         }
 
-        // depend on fulfillReturn and rejectReturn flag, we
-        // implement then behavior.
-        // this.Done -> promise.PostProcessedResolve, promise.PostProcessedReject
         internal void PostProcessedDone(Promise promise,
             Func<object, object> postProcessFullfilled, 
             Func<Exception, object> postProcessRejected) {
