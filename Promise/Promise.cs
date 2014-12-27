@@ -1,19 +1,15 @@
-﻿#define PROMISE_DEBUG
-#define ASYNC_THEN_CALL
+﻿// #define ASYNC_THEN_CALL
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ghost.Util {
+namespace CsPromise {
     // TODO 
     // 1. logging feature
-    // 2. creating promise object if Then return IAsyncResult
-    // 3. comparing the performance of TAP and Promise.
+    // 2. comparing the performance of TAP and Promise.
 
     /*
       Promise pattern for c#
@@ -26,19 +22,14 @@ namespace Ghost.Util {
             Rejected = -1,
         };
 
-        private delegate void OnFullFill(Object result);
-        private delegate void OnReject(Exception e);
+        private delegate void OnCallback(object param1);
 
-        private OnFullFill onFulfill_ = null;
-        private OnReject onReject_ = null;
+        private OnCallback onFulfill_ = null;
+        private OnCallback onReject_ = null;
 
-        private Object result_ = null;
+        private object result_ = null;
 
-        protected Object lock_ = new Object();
-
-#if PROMISE_DEBUG
-        private Promise sourcePromise_;
-#endif
+        protected object lock_ = new object();
 
         protected States State {
             get;
@@ -49,78 +40,97 @@ namespace Ghost.Util {
             State = States.Pending;
         }
 
-        public Promise(Action<Action<Object>, Action<Exception>> initializer) {
+        public Promise(Action<Action<object>, Action<Exception>> initializer) {
             State = States.Pending;
 
             initializer(this.Resolve, this.Reject);
 
         }
 
-        public Promise(Action<Action<Object>> initializer) {
+        public Promise(Action<Action<object>> initializer) {
             State = States.Pending;
 
             initializer(this.Resolve);
         }
 
-        public void Done(Action<Object> onFulfilled, 
-                Action<Exception> onRejected) {
-            Delegate delegateToCall = null;
+        public void Done(Action<object> onFulfilled, 
+                Action<object> onRejected) {
+            DoneImpl(onFulfilled, onRejected);
+        }
+
+        internal static Func<object, object> GetNullOrConvertFunction<TArg, TResult>(
+            Func<TArg, TResult> func) {
+            if (func == null)
+                return null;
+
+            return (result) => func((TArg)result);
+        }
+
+        internal static Action<object> GetNullOrConvertFunction<TArg>(
+            Action<TArg> func) {
+            if (func == null)
+                return null;
+
+            return (result) => func((TArg)result);
+        }
+
+        internal void DoneImpl(Action<object> onFulfilled,
+            Action<object> onRejected) {
+
+            OnCallback handlerToCall = null;
 
             lock (lock_) {
                 if (onFulfilled != null) {
-                    onFulfill_ += new OnFullFill(onFulfilled);
+                    onFulfill_ += new OnCallback(onFulfilled);
                 }
 
                 if (onRejected != null) {
-                    onReject_ += new OnReject(onRejected);
+                    onReject_ += new OnCallback(onRejected);
                 }
 
-                delegateToCall = PopDelegateToCall();
+                handlerToCall = PopDelegateToCall();
             }
 
             // User delegate can take a long time,
             // we will call user delegate outside lock.
-            CallDelegate(delegateToCall);
+            CallDelegate(handlerToCall);
+
         }
 
         // this function should be called after locking the lock_ object.
-        private Delegate PopDelegateToCall() {
-            Delegate callDelegate = null;
+        private OnCallback PopDelegateToCall() {
+            OnCallback delegateToCall = null;
 
             if (State != States.Pending) {
                 if (State == States.Fulfilled) {
                     if (onFulfill_ != null) {
-                        callDelegate = onFulfill_;
+                        delegateToCall = onFulfill_;
                     }
-
                 }
                 else if (State == States.Rejected) {
                     if (onReject_ != null) {
-                        callDelegate = onReject_; 
+                        delegateToCall = onReject_;
                     }
                 }
 
-                ResetHandler();
+                onFulfill_ = null;
+                onReject_ = null;
             }
 
-            return callDelegate;
+            return delegateToCall;
         }
 
-        private void CallDelegate(Delegate callDelegate) {
-            if (callDelegate != null) {
+        private void CallDelegate(OnCallback delegateToCall) {
+            if (delegateToCall != null) {
 #if ASYNC_THEN_CALL
                 Task.Factory.StartNew(() => {
-                    callDelegate.DynamicInvoke(result_);
+                    delegateToCall(result_);
                 });
 #else
-                callDelegate.DynamicInvoke(result_);
+                delegateToCall(result_);
+
 #endif
             }
-        }
-
-        private void ResetHandler() {
-            onFulfill_ = null;
-            onReject_ = null;
         }
 
         // not a standard. but it might be useful for c#.
@@ -144,109 +154,86 @@ namespace Ghost.Util {
         }
 
         public Promise Catch(Action<Exception> postProcessRejected) {
-            return Then(null, postProcessRejected);
+            return Then((Action<object>)null, postProcessRejected);
         }
 
         public Promise<T> Catch<T>(
             Func<Exception, Promise<T>> postProcessRejected) {
-            return Then((Func<Object, Promise<T>>)null, postProcessRejected);
+            return Then((Func<object, Promise<T>>)null, postProcessRejected);
         }
 
         public Promise Then(
-            Action<Object> postProcessFulfilled,
+            Action<object> postProcessFulfilled,
             Action<Exception> postProcessRejected = null) {
-
-            var postFulfilled = ConvertAsObjectFunc(postProcessFulfilled);
-            var postRejected = ConvertAsObjectFunc(postProcessRejected);
 
             var promise = new Promise();
 
-            PostProcessedDone(promise, postFulfilled, false, postRejected, false);
-
+            PostProcessedDone(promise, postProcessFulfilled, 
+                postProcessRejected);
+                
             return promise;
         }
 
         public Promise<TOtherResult> Then<TOtherResult>(
-            Func<Object, Promise<TOtherResult>> postProcessFulfilled,
+            Func<object, Promise<TOtherResult>> postProcessFulfilled,
             Func<Exception, Promise<TOtherResult>> postProcessRejected = null) {
 
-            var postFulfilled = ConvertAsObjectFunc(postProcessFulfilled);
-            var postRejected = ConvertAsObjectFunc(postProcessRejected);
-
             var promise = new Promise<TOtherResult>();
-            PostProcessedDone(promise, postFulfilled, true, postRejected, true);
+            PostProcessedDone(promise, postProcessFulfilled, 
+                postProcessRejected);
 
             return promise;
         }
 
-        // Action<T> => Action<Object>
-        internal static Action<Object> ConvertAsObjectAction<T>(Action<T> action) {
-            return action == null ? null : new Action<Object>(
-                (value) => {
-                    action((T)value);
-                }
-            );
-        }
-
-        // Action<T> => Func<T, Object>
-        internal static Func<T, Object> ConvertAsObjectFunc<T>(Action<T> action) {
-            return ConvertAsObjectFunc<T, T>(action);
-        }
-
-        // Action<T> => Func<TNew, Object>
-        internal static Func<TNew, Object> ConvertAsObjectFunc<TOrg, TNew>(
-            Action<TOrg> action) {
-            return action == null ? null : new Func<TNew, Object>(
-                (result) => {
-                    action((TOrg)(object)result);
-                    return null;
-                }
-            );
-        }
-
-        // Func<T1, T2> => Func<Object, Object>
-        internal static Func<Object, Object> ConvertAsObjectFunc<T, TResult>(
-            Func<T, TResult> func) {
-            return func == null ? null : new Func<Object, Object>(
-                (result) => {
-                    return func((T)result);
-                }
-            );
-        }
-
-        
         // depend on fulfillReturn and rejectReturn flag, we
         // implement then behavior.
         // this.Done -> promise.PostProcessedResolve, promise.PostProcessedReject
         internal void PostProcessedDone(Promise promise,
-            Func<Object, Object> postProcessFullfilled, 
-            bool postFulfilledReturnObject,
-            Func<Exception, Object> postProcessRejected, 
-            bool postRejectedReturnObject) {
-
-#if PROMISE_DEBUG
-            promise.LinkSource(this);
-#endif
+            Func<object, object> postProcessFullfilled, 
+            Func<Exception, object> postProcessRejected) {
 
             this.Done(
                 result => promise.PostProcessedResolve(result, 
-                    postProcessFullfilled,
-                    postFulfilledReturnObject),
-                exception => promise.PostProcessedReject(exception,
-                    postProcessRejected,
-                    postRejectedReturnObject)
+                    postProcessFullfilled),
+                exception => promise.PostProcessedReject((Exception)exception,
+                    postProcessRejected)
             );
         }
 
-        private void PostProcessedResolve(Object result,
-            Func<Object, Object> postProcess,
-            bool returnObject) {
+        internal void PostProcessedDone(Promise promise,
+            Action<object> postProcessFullfilled,
+            Action<Exception> postProcessRejected) {
 
+            this.Done(
+                result => promise.PostProcessedResolve(
+                    result, postProcessFullfilled),
+                exception => promise.PostProcessedReject(
+                    (Exception)exception, postProcessRejected)
+            );
+        }
+
+        private void PostProcessedResolve(object result,
+            Func<object, object> postProcess) {
             if (postProcess != null) {
                 try {
-                    var resultProcess = postProcess(result);
+                    this.Resolve(postProcess(result));
+                }
+                catch (Exception e) {
+                    this.Reject(e);
+                }
+            }
+            else {
+                this.Resolve(result);
+            }
+        }
 
-                    this.Resolve(returnObject ? resultProcess : result);
+        private void PostProcessedResolve(object result,
+            Action<object> postProcess) {
+            if (postProcess != null) {
+                try {
+                    postProcess(result);
+
+                    this.Resolve(result);
                 }
                 catch (Exception e) {
                     this.Reject(e);
@@ -258,22 +245,34 @@ namespace Ghost.Util {
         }
 
         private void PostProcessedReject(Exception exception,
-            Func<Exception, Object> postProcess,
-            bool returnObject) {
+            Func<Exception, object> postProcess) {
 
             if (postProcess != null) {
                 try {
                     var invokeResult = postProcess(exception);
 
-                    if (returnObject) {
-                        this.Resolve(invokeResult);
+                    this.Resolve(invokeResult);
+                }
+                catch (Exception e) {
+                    this.Reject(e);
+                }
+            }
+            else {
+                this.Reject(exception);
+            }
+        }
+
+        private void PostProcessedReject(Exception exception,
+            Action<Exception> postProcess) {
+
+            if (postProcess != null) {
+                try {
+                    postProcess(exception);
+
+                    try {
+                        this.Reject(exception);
                     }
-                    else {
-                        try {
-                            this.Reject(exception);
-                        }
-                        catch {
-                        }
+                    catch {
                     }
                 }
                 catch (Exception e) {
@@ -287,7 +286,7 @@ namespace Ghost.Util {
 
         // https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
 
-        public void Resolve(Object obj) {
+        public void Resolve(object obj) {
             // 1.    
             if (obj != null && obj.Equals(this)) {
                 throw new InvalidOperationException("Type error. "
@@ -299,9 +298,6 @@ namespace Ghost.Util {
             // <=>
             // B.Done((result) -> A.Resolve(result))
             if (obj is Promise) {
-#if PROMISE_DEBUG
-                this.LinkSource((Promise)obj);
-#endif
 
                 ((Promise)obj).Done(
                     (result) => this.Resolve(result),
@@ -330,28 +326,29 @@ namespace Ghost.Util {
             }
         }
 
-        public void Reject(Exception e) {
+        public void Reject(object e) {
+            Debug.Assert(e == null || e is Exception);
             SetState(States.Rejected, e);
         }
 
-        private void Fulfill(Object result) {
+        private void Fulfill(object result) {
             SetState(States.Fulfilled, result);
         }
 
-        private Promise GetPromiseFromThenAction(Object target) {
-            if (target is Action<Action<Object>, Action<Exception>>) {
+        private Promise GetPromiseFromThenAction(object target) {
+            if (target is Action<Action<object>, Action<Exception>>) {
                 return new Promise(
-                    (Action<Action<Object>, Action<Exception>>)target
+                    (Action<Action<object>, Action<Exception>>)target
                 );
             }
-            else if (target is Action<Action<Object>>) {
-                return new Promise((Action<Action<Object>>)target);
+            else if (target is Action<Action<object>>) {
+                return new Promise((Action<Action<object>>)target);
             }
             
             return CreateNewPromiseFromThenMethod(target);
         }
 
-        private Promise CreateNewPromiseFromThenMethod(Object target) {
+        private Promise CreateNewPromiseFromThenMethod(object target) {
             var thenMethod = target.GetType().GetMethod("Then");
 
             if (thenMethod == null) {
@@ -362,25 +359,25 @@ namespace Ghost.Util {
 
             if (parameterTypes.Length == 1) {
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<Object>>)) {
+                        == typeof(Action<Action<object>>)) {
                     return new Promise(resolve
                         => thenMethod
-                            .Invoke(target, new Object[] { resolve }));
+                            .Invoke(target, new object[] { resolve }));
                 }
 
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<Object>, Action<Exception>>)) {
+                        == typeof(Action<Action<object>, Action<Exception>>)) {
                     return new Promise((resolve, reject)
                         => thenMethod
-                            .Invoke(target, new Object[] { resolve, reject }));
+                            .Invoke(target, new object[] { resolve, reject }));
                 }
             }
 
             return null;
         }
 
-        private void SetState(States newState, Object result) {
-            Delegate delegateToCall = null;
+        private void SetState(States newState, object result) {
+            OnCallback delegateToCall = null;
 
             lock (lock_) {
                 if (State == States.Pending) {
@@ -389,30 +386,11 @@ namespace Ghost.Util {
                     result_ = result;
 
                     delegateToCall = PopDelegateToCall();
-
-#if PROMISE_DEBUG
-                    if (sourcePromise_ == null) {
-                        updateStateFrame_ =  new StackFrame(1);
-                    }
-#endif
                 }
             }
 
             CallDelegate(delegateToCall);
         }
-
-#if PROMISE_DEBUG
-        private void LinkSource(Promise promise) {
-            if (promise != null)
-                promise.LinkSource(sourcePromise_);
-
-            sourcePromise_ = promise;
-        }
-
-        public Promise GetSourcePromise() {
-            return sourcePromise_;
-        }
-#endif
     }
 
     public class Promise<T> : Promise {
@@ -429,12 +407,11 @@ namespace Ghost.Util {
             Action<T> postProcessFulfilled,
             Action<Exception> postProcessRejected = null) {
 
-            var postFulfill = ConvertAsObjectFunc<T, Object>(postProcessFulfilled);
-            var postRejected = ConvertAsObjectFunc(postProcessRejected);
-
             var promise = new Promise();
 
-            PostProcessedDone(promise, postFulfill, false, postRejected, false);
+            PostProcessedDone(promise, 
+                GetNullOrConvertFunction(postProcessFulfilled), 
+                GetNullOrConvertFunction(postProcessRejected));
 
             return promise;
         }
@@ -443,69 +420,20 @@ namespace Ghost.Util {
             Func<T, Promise<TOtherResult>> postProcessFulfilled,
             Func<Exception, Promise<TOtherResult>> postProcessRejected = null) {
 
-            var postFulfill = ConvertAsObjectFunc(postProcessFulfilled);
-            var postRejected = ConvertAsObjectFunc(postProcessRejected);
-
             var promise = new Promise<TOtherResult>();
 
-            PostProcessedDone(promise, postFulfill, true, postRejected, true);
+            PostProcessedDone(promise,
+                GetNullOrConvertFunction(postProcessFulfilled),
+                GetNullOrConvertFunction(postProcessRejected));
 
             return promise;
         }
 
-        
         public void Done(Action<T> onFulfilled, Action<Exception> onRejected) {
-            Done(ConvertAsObjectAction(onFulfilled), onRejected);
+            DoneImpl((result) => onFulfilled((T)result), 
+                (exception) => onRejected((Exception) exception));
         }
 
         #endregion
-    }
-
-    // There is an order when c# compiler bind the method.
-    // The c# compiler lookup member method and then 
-    // extension method.
-    // for giving high priority on specialized generic method.
-    // I created an extension method for a general method. 
-    // and create member method for a specialized generic method.
-    public static class PromiseUtil {
-        public static Promise<T> Catch<T>(
-            this Promise thisPromise,
-            Func<Exception, T> postProcessRejected) {
-            return PromiseUtil.Then<T>(thisPromise,
-                null, postProcessRejected);
-        }
-
-        public static Promise<TOtherResult> Then<T, TOtherResult>(
-                this Promise<T> thisPromise,
-                Func<T, TOtherResult> postProcessFulfilled,
-                Func<Exception, TOtherResult> postProcessRejected = null) {
-
-            var postFulfill = Promise.ConvertAsObjectFunc(postProcessFulfilled);
-            var postRejected = Promise.ConvertAsObjectFunc(postProcessRejected);
-
-            var promise = new Promise<TOtherResult>();
-
-            thisPromise.PostProcessedDone(promise, postFulfill, true, 
-                postRejected, true);
-
-            return promise;
-        }
-
-        public static Promise<TOtherResult> Then<TOtherResult>(
-            this Promise thisPromise,
-            Func<Object, TOtherResult> postProcessFulfilled,
-            Func<Exception, TOtherResult> postProcessRejected = null) {
-
-            var postFulfilled = Promise.ConvertAsObjectFunc(postProcessFulfilled);
-            var postRejected = Promise.ConvertAsObjectFunc(postProcessRejected);
-
-            var promise = new Promise<TOtherResult>();
-
-            thisPromise.PostProcessedDone(promise, postFulfilled, true, 
-                postRejected, true);
-
-            return promise;
-        }
-
     }
 }

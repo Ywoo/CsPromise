@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -81,7 +81,7 @@ namespace Ghost.Test
                 return promise3;
             }, null);
 
-            Assert.AreEqual(promise1, promise2.GetSourcePromise());
+            // Assert.AreEqual(promise1, promise2.GetSourcePromise());
 
             promise1.Resolve(null);
 
@@ -89,8 +89,8 @@ namespace Ghost.Test
 
             Assert.IsNotNull(promise3);
 
-            Assert.AreEqual(promise3, promise2.GetSourcePromise());
-            Assert.AreEqual(promise1, promise3.GetSourcePromise());
+            // Assert.AreEqual(promise3, promise2.GetSourcePromise());
+            // Assert.AreEqual(promise1, promise3.GetSourcePromise());
         }
     }
  }

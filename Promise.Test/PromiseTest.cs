@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -225,21 +225,21 @@ namespace Ghost.Test
         // 2.1.2.1: When fulfilled, a promise: must not transition to any other state.
         [TestMethod()]
         public void FullfillThenImmediatelyRejectTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
-                promise.Resolve(new Object());
+                promise.Resolve(new object());
                 promise.Reject(new Exception());
             }, true);
         }
 
         [TestMethod()]
         public void DelayedFullfillThenRejectTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
                 Task.Factory.StartNew(() => {
-                    promise.Resolve(new Object());
+                    promise.Resolve(new object());
                     promise.Reject(new Exception());
                 });
             }, true);
@@ -247,10 +247,10 @@ namespace Ghost.Test
 
         [TestMethod()]
         public void FullfillThenDelayedRejectTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
-                promise.Resolve(new Object());    
+                promise.Resolve(new object());    
 
                 Task.Factory.StartNew(() => {
                     promise.Reject(new Exception());
@@ -261,48 +261,48 @@ namespace Ghost.Test
         // 2.1.3.1: When rejected, a promise: must not transition to any other state.
         [TestMethod()]
         public void RejectThenImmediatelyFulfillTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
                 promise.Reject(new Exception());
-                promise.Resolve(new Object());
+                promise.Resolve(new object());
             }, false);
         }
 
         [TestMethod()]
         public void DelayedRejectThenFulfillTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
                 Task.Factory.StartNew(() => {
                     promise.Reject(new Exception());
-                    promise.Resolve(new Object());
+                    promise.Resolve(new object());
                 });
             }, false);
         }
 
         [TestMethod()]
         public void RejectThenDelayedFulfillTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             CheckSettled(promise, () => {
                 promise.Reject(new Exception());
 
                 Task.Factory.StartNew(() => {
-                    promise.Resolve(new Object());
+                    promise.Resolve(new object());
                 });
             }, false);
         }
 
-        Promise<Object> GetRejectedPromise<T>(Exception e) {
-            var promise = new Promise<Object>();
+        Promise<object> GetRejectedPromise<T>(Exception e) {
+            var promise = new Promise<object>();
             promise.Reject(e);
 
             return promise;
         }
 
-        Promise<Object> GetResolvedPromise<T>(T result) {
-            var promise = new Promise<Object>();
+        Promise<object> GetResolvedPromise<T>(T result) {
+            var promise = new Promise<object>();
             promise.Resolve(result);
 
             return promise;
@@ -312,7 +312,7 @@ namespace Ghost.Test
         // 2.2.1.1: If `onFulfilled` is not a function, it must be ignored.
         [TestMethod()]
         public void OnFullfilledIgnoreTest() {
-            var promise = GetRejectedPromise<Object>(new Exception());
+            var promise = GetRejectedPromise<object>(new Exception());
             var rejectedCalled = false;
 
             promise.Then(null, (e) => {
@@ -325,7 +325,7 @@ namespace Ghost.Test
 
         [TestMethod()]
         public void OnFullfilledIgnoreChainedOffTest() {
-            var promise = GetRejectedPromise<Object>(new Exception());
+            var promise = GetRejectedPromise<object>(new Exception());
             var rejectedCalled = false;
 
             promise.Then(
@@ -341,7 +341,7 @@ namespace Ghost.Test
         // 2.2.1.2: If `onRejected` is not a function, it must be ignored.
         [TestMethod()]
         public void OnRejectIgnoreTest() {
-            var promise = GetResolvedPromise<Object>(new Exception());
+            var promise = GetResolvedPromise<object>(new Exception());
             var fulfilledCalled = false;
 
             promise.Then((result) => {
@@ -354,7 +354,7 @@ namespace Ghost.Test
 
         [TestMethod()]
         public void OnRejectIgnoreChainedOffTest() {
-            var promise = GetResolvedPromise<Object>(new Exception());
+            var promise = GetResolvedPromise<object>(new Exception());
             var fulfilledCalled = false;
 
             promise.Then(
@@ -374,9 +374,9 @@ namespace Ghost.Test
         // 2.2.2.1: it must be called after `promise` is fulfilled, with `promise`’s fulfillment value as its first argument.
         [TestMethod()]
         public void OnFulfillTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
-            var objResult = new Object();
+            var objResult = new object();
 
             promise.Then((result) => {
                 Assert.AreEqual(objResult, result);
@@ -390,9 +390,9 @@ namespace Ghost.Test
         // 2.2.2.2: it must not be called before `promise` is fulfilled
         [TestMethod()]
         public void CallAfterPromiseIsFulfilledTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
-            var objResult = new Object();
+            var objResult = new object();
             var isFulfilled = false;
 
             promise.Then((result) => {
@@ -411,9 +411,9 @@ namespace Ghost.Test
 
         [TestMethod()]
         public void NotCallBeforePromiseIsFulfilledTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
-            var objResult = new Object();
+            var objResult = new object();
             var onFulfilled = false;
 
             promise.Then((result) => {
@@ -434,7 +434,7 @@ namespace Ghost.Test
         public void NotMoreCallOnFulfillAlreadyFulfilledTest() {
             var timesCalled = 0;
 
-            var promise = GetResolvedPromise<Object>(new Object()).Then(
+            var promise = GetResolvedPromise<object>(new object()).Then(
                 (result) => {
                     Assert.AreEqual(1, ++timesCalled);
                 }
@@ -447,9 +447,9 @@ namespace Ghost.Test
         [TestMethod()]
         public void NotMoreCallOnFulfillMoreResolveTest() {
             var timesCalled = 0;
-            var resultObj = new Object();
+            var resultObj = new object();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(
                 (result) => {
@@ -459,7 +459,7 @@ namespace Ghost.Test
             );
 
             promise.Resolve(resultObj);
-            promise.Resolve(new Object());
+            promise.Resolve(new object());
 
             CheckSettled(promise, null, true);
         }
@@ -468,9 +468,9 @@ namespace Ghost.Test
         [TestMethod()]
         public void NotMoreCallOnFulfillMoreDelayedResolveTest() {
             var timesCalled = 0;
-            var resultObj = new Object();
+            var resultObj = new object();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(
                 (result) => {
@@ -481,7 +481,7 @@ namespace Ghost.Test
 
             var task = Task.Factory.StartNew(() => {
                 promise.Resolve(resultObj);
-                promise.Resolve(new Object());
+                promise.Resolve(new object());
             });
 
             CheckSettled(promise, null, true);
@@ -493,9 +493,9 @@ namespace Ghost.Test
         [TestMethod()]
         public void NotMoreCallOnFulfillMoreOnceDelayedResolveTest() {
             var timesCalled = 0;
-            var resultObj = new Object();
+            var resultObj = new object();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(
                 (result) => {
@@ -507,7 +507,7 @@ namespace Ghost.Test
             promise.Resolve(resultObj);
 
             var task = Task.Factory.StartNew(() => {
-                promise.Resolve(new Object());
+                promise.Resolve(new object());
             });
 
             CheckSettled(promise, null, true);
@@ -519,10 +519,10 @@ namespace Ghost.Test
         [TestMethod()]
         public void MultipleThenCallSparcedApartInTime() {
             var timesCalled = new int[] { 0, 0, 0 };
-            var resultObj = new Object();
+            var resultObj = new object();
             var tasks = new List<Task>();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(
                 (result) => {
@@ -567,9 +567,9 @@ namespace Ghost.Test
         [TestMethod()]
         public void MultipleThenCallInterleaved() {
             var timesCalled = new int[] { 0, 0, 0 };
-            var resultObj = new Object();
+            var resultObj = new object();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(
                 (result) => {
@@ -592,7 +592,7 @@ namespace Ghost.Test
         // "2.2.3.1: it must be called after `promise` is rejected, with `promise`’s rejection reason as its first argument.
         [TestMethod()]
         public void OnRejectedTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var exception = new Exception();
 
@@ -608,7 +608,7 @@ namespace Ghost.Test
         // 2.2.3.2: it must not be called before `promise` is rejected
         [TestMethod()]
         public void CallAfterPromiseIsRejectedTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var exception = new Exception();
             var isRejected = false;
@@ -630,7 +630,7 @@ namespace Ghost.Test
 
         [TestMethod()]
         public void NotCallBeforePromiseIsRejectedTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var exception = new Exception();
             var onRejected = false;
@@ -653,7 +653,7 @@ namespace Ghost.Test
         public void NotMoreCallOnRejectedAlreadyRejectedTest() {
             var timesCalled = 0;
 
-            var promise = GetRejectedPromise<Object>(new Exception())
+            var promise = GetRejectedPromise<object>(new Exception())
                 .Then(null,
                     (result) => {
                         Assert.AreEqual(1, ++timesCalled);
@@ -669,7 +669,7 @@ namespace Ghost.Test
             var timesCalled = 0;
             var resultObj = new Exception();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Catch(
                 (result) => {
@@ -690,7 +690,7 @@ namespace Ghost.Test
             var timesCalled = 0;
             var resultObj = new Exception();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Catch(
                 (result) => {
@@ -715,7 +715,7 @@ namespace Ghost.Test
             var timesCalled = 0;
             var resultObj = new Exception();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Catch(
                 (result) => {
@@ -742,7 +742,7 @@ namespace Ghost.Test
             var resultObj = new Exception();
             var tasks = new List<Task>();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(null, 
                 (result) => {
@@ -789,7 +789,7 @@ namespace Ghost.Test
             var timesCalled = new int[] { 0, 0, 0 };
             var resultObj = new Exception();
 
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             promise.Then(null, 
                 (result) => {

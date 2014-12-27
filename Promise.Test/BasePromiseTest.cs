@@ -6,12 +6,12 @@ using System.Threading;
 using System.Text;
 using System.Timers;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     public class BasePromiseTest {
-        public object dummy_ = new Object();
+        public object dummy_ = new object();
         public bool done_ = false;
 
         public SemaphoreSlim semaphore_ = null;
@@ -31,11 +31,11 @@ namespace Ghost.Test
 
         public class DeferredItem {
             public Promise Promise;
-            public Action<Object> Resolve;
+            public Action<object> Resolve;
             public Action<Exception> Reject;
         }
 
-        public void TestFulfilled(Object value, Action<Promise> test) {
+        public void TestFulfilled(object value, Action<Promise> test) {
             new FulfilledTester(value, test).Test();
         }
 
@@ -113,9 +113,9 @@ namespace Ghost.Test
     }
 
     public class FulfilledTester : BasePromiseTest {
-        private Object value_;
+        private object value_;
         private Action<Promise> test_;
-        public FulfilledTester(Object value,
+        public FulfilledTester(object value,
                 Action<Promise> test) {
             value_ = value;
             test_ = test;
