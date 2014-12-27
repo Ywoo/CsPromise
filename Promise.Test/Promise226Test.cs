@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -64,7 +64,7 @@ namespace Ghost.Test
         internal class Call {
             bool called_ = false;
 
-            internal Object Result = null;
+            internal object Result = null;
 
             Exception exception_ = new Exception();
 
@@ -74,15 +74,15 @@ namespace Ghost.Test
                 }
             }
 
-            internal Object SpyRejectReturnHandler(Exception result) {
+            internal object SpyRejectReturnHandler(Exception result) {
                 called_ = true;
 
                 Result = result;
                 
-                return default(Object);
+                return default(object);
             }
 
-            internal Object SpyRejectThrowsHandler(Exception result) {
+            internal object SpyRejectThrowsHandler(Exception result) {
                 called_ = true;
 
                 Result = result;
@@ -90,7 +90,7 @@ namespace Ghost.Test
                 throw exception_;
             }
 
-            internal Object SpyFulfillReturnHander(Object result) {
+            internal object SpyFulfillReturnHander(object result) {
                 called_ = true;
 
                 Result = result;
@@ -98,7 +98,7 @@ namespace Ghost.Test
                 return result;
             }
 
-            internal Object SpyFulfillThrowsHander(Object result) {
+            internal object SpyFulfillThrowsHander(object result) {
                 called_ = true;
 
                 Result = result;
@@ -107,9 +107,9 @@ namespace Ghost.Test
             }
         }
 
-        Object sentinel = new object();
-        Object sentinel2 = new Object();
-        Object sentinel3 = new object();
+        object sentinel = new object();
+        object sentinel2 = new object();
+        object sentinel3 = new object();
 
         Action CallbackAggregator(int times, Action ultimateCallback) {
             var soFar = 0;
@@ -133,9 +133,9 @@ namespace Ghost.Test
                 var rejectHandler = new Call();
                 var called = false;
 
-                promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-                promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-                promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler2.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
 
                 promise.Then(
                     (result) => {
@@ -167,9 +167,9 @@ namespace Ghost.Test
 
                 var called = false;
 
-                promise.Then<Object>((Func<Object, Object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
-                promise.Then<Object>((Func<Object, Object>)handler2.SpyFulfillThrowsHander, rejectHandler.SpyRejectReturnHandler);
-                promise.Then<Object>((Func<Object, Object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler1.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler2.SpyFulfillThrowsHander, rejectHandler.SpyRejectReturnHandler);
+                promise.Then<object>((Func<object, object>)handler3.SpyFulfillReturnHander, rejectHandler.SpyRejectReturnHandler);
 
                 promise.Then(
                     (result) => {
@@ -197,9 +197,9 @@ namespace Ghost.Test
 
                 var semiDone = CallbackAggregator(3, () => called = true);
 
-                var sentinel1 = new Object();
-                var sentinel2 = new Object();
-                var sentinel3 = new Object();
+                var sentinel1 = new object();
+                var sentinel2 = new object();
+                var sentinel3 = new object();
 
                 promise.Then((result) => {
                     return sentinel1;
@@ -229,7 +229,7 @@ namespace Ghost.Test
         // "`onFulfilled` handlers are called in the original order
         [TestMethod()]
         public void MultipleFulfillHandlerCalledOriginalOrderTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
             var callOrder = 0;
 
             var waitedPromise = promise.Then(
@@ -249,7 +249,7 @@ namespace Ghost.Test
                 }
             );
 
-            promise.Resolve(new Object());
+            promise.Resolve(new object());
             waitedPromise.Wait();
 
             Assert.AreEqual(3, callOrder);
@@ -258,7 +258,7 @@ namespace Ghost.Test
         // even when one handler is added inside another handler
         [TestMethod()]
         public void MultipleFulfillHandlerCalledOriginalOrderEvenHandlerAddedTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
             var callOrder = 0;
 
             promise.Then(
@@ -279,7 +279,7 @@ namespace Ghost.Test
                 }
             );
 
-            promise.Resolve(new Object());
+            promise.Resolve(new object());
             SetTimeout(() => Assert.AreEqual(3, callOrder), 50);
         }
 
@@ -287,16 +287,16 @@ namespace Ghost.Test
         // order of their originating calls to `then`.
         [TestMethod()]
         public void MultipleRejectHanderTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var fulfillHander = new Call();
             var rejectHandler1 = new Call();
             var rejectHandler2 = new Call();
             var rejectHandler3 = new Call();
 
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillReturnHander, rejectHandler1.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillReturnHander, rejectHandler2.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillReturnHander, rejectHandler3.SpyRejectReturnHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillReturnHander, rejectHandler1.SpyRejectReturnHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillReturnHander, rejectHandler2.SpyRejectReturnHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillReturnHander, rejectHandler3.SpyRejectReturnHandler);
 
             var resultObj = new Exception();
 
@@ -320,16 +320,16 @@ namespace Ghost.Test
         // multiple rejection handlers, one of which throws
         [TestMethod()]
         public void MultipleRejectHanderOneThrowsTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var fulfillHander = new Call();
             var rejectHandler1 = new Call();
             var rejectHandler2 = new Call();
             var rejectHandler3 = new Call();
 
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillReturnHander, rejectHandler1.SpyRejectReturnHandler);
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillThrowsHander, rejectHandler2.SpyRejectThrowsHandler);
-            promise.Then<Object>((Func<Object, Object>)fulfillHander.SpyFulfillReturnHander, rejectHandler3.SpyRejectReturnHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillReturnHander, rejectHandler1.SpyRejectReturnHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillThrowsHander, rejectHandler2.SpyRejectThrowsHandler);
+            promise.Then<object>((Func<object, object>)fulfillHander.SpyFulfillReturnHander, rejectHandler3.SpyRejectReturnHandler);
 
             var resultObj = new Exception();
 
@@ -353,13 +353,13 @@ namespace Ghost.Test
         // results in multiple branching chains with their own fulfillment values
         [TestMethod()]
         public void MultipleChainedRejectHanderTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
 
             var resultObj = new Exception();
 
-            var sentinel1 = new Object();
-            var sentinel2 = new Object();
-            var sentinel3 = new Object();
+            var sentinel1 = new object();
+            var sentinel2 = new object();
+            var sentinel3 = new object();
 
             promise.Catch((result) => {
                 return sentinel1;
@@ -387,7 +387,7 @@ namespace Ghost.Test
         // onRejected` handlers are called in the original order
         [TestMethod()]
         public void MultipleRejectHandlerCalledOriginalOrderTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
             var callOrder = 0;
 
             promise.Then(null, 
@@ -416,7 +416,7 @@ namespace Ghost.Test
         // even when one handler is added inside another handler
         [TestMethod()]
         public void MultipleRejectHandlerCalledOriginalOrderEvenHandlerAddedTest() {
-            var promise = new Promise<Object>();
+            var promise = new Promise<object>();
             var callOrder = 0;
 
             promise.Then(null, 

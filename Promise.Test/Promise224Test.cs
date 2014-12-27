@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서

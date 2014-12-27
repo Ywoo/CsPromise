@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -73,7 +73,7 @@ namespace Ghost.Test
             var expectedException = new Exception();
             Exception sentException = null;
 
-            PromiseTest.TestFulfilled<Object>(new Object(), promise => {
+            PromiseTest.TestFulfilled<object>(new object(), promise => {
                 promise.Then(
                     result => {
                         throw expectedException;
@@ -91,7 +91,7 @@ namespace Ghost.Test
 
             sentException = null;
 
-            PromiseTest.TestRejected<Object>(new Exception(), promise => {
+            PromiseTest.TestRejected<object>(new Exception(), promise => {
                 promise.Then(null,
                     exception => {
                         throw expectedException;
@@ -112,10 +112,10 @@ namespace Ghost.Test
         // with the same value.
         [TestMethod()]
         public void SecondOnfulfillCallTest() {
-            var expectedResult = new Object();
+            var expectedResult = new object();
             object sentResult = null;
 
-            PromiseTest.TestFulfilled<Object>(expectedResult, promise => {
+            PromiseTest.TestFulfilled<object>(expectedResult, promise => {
                 promise.Then(
                     null        
                 ).Then(
@@ -136,7 +136,7 @@ namespace Ghost.Test
             var expectedException = new Exception();
             Exception sentException = null;
 
-            PromiseTest.TestRejected<Object>(expectedException, promise => {
+            PromiseTest.TestRejected<object>(expectedException, promise => {
                 promise.Then(
                     null,
                     null

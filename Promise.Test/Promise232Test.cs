@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -62,7 +62,7 @@ namespace Ghost.Test
         //
         #endregion
 
-        static public void TestPromiseResolution<T>(T resolveObj, Func<Object> factory, Action<Promise<T>> test) {
+        static public void TestPromiseResolution<T>(T resolveObj, Func<object> factory, Action<Promise<T>> test) {
             PromiseTest.TestFulfilled<T>(resolveObj, 
                 internalPromise => {
                     internalPromise.Then(result => factory());
@@ -88,8 +88,8 @@ namespace Ghost.Test
         // 2.3.2.1: If `x` is pending, `promise` must remain pending until `x` is fulfilled or rejected.
         [TestMethod()]
         public void PromiseRemainPendingUntilXIsResolvedTest() {
-            TestPromiseResolution<Object>(new Object(),
-                () => new Promise<Object>(),
+            TestPromiseResolution<object>(new object(),
+                () => new Promise<object>(),
                 (promise) => {
                     promise.Then(
                         (result) => {
@@ -110,12 +110,12 @@ namespace Ghost.Test
         // 2.3.2.2: If/when `x` is fulfilled, fulfill `promise` with the same value.
         [TestMethod()]
         public void FulfillPromiseWithSameValueIfXIsFulfilledTest() {
-            var result = new Object();
+            var result = new object();
 
             // `x` is already-fulfilled
-            TestPromiseResolution<Object>(new Object(),
+            TestPromiseResolution<object>(new object(),
                 () => {
-                    var promise = new Promise<Object>();
+                    var promise = new Promise<object>();
 
                     promise.Resolve(result);
                     
@@ -130,9 +130,9 @@ namespace Ghost.Test
 
             // `x` is eventually-fulfilled
 
-            TestPromiseResolution<Object>(new Object(),
+            TestPromiseResolution<object>(new object(),
                 () => {
-                    var promise = new Promise<Object>();
+                    var promise = new Promise<object>();
 
                     Task.Factory.StartNew(() => {
                         Thread.Sleep(100);
@@ -156,9 +156,9 @@ namespace Ghost.Test
             var throwException = new Exception();
 
             // `x` is already-rejected
-            TestPromiseResolution<Object>(new Object(),
+            TestPromiseResolution<object>(new object(),
                 () => {
-                    var promise = new Promise<Object>();
+                    var promise = new Promise<object>();
 
                     promise.Reject(throwException);
 
@@ -176,9 +176,9 @@ namespace Ghost.Test
 
             // `x` is eventually-rejected
 
-            TestPromiseResolution<Object>(new Object(),
+            TestPromiseResolution<object>(new object(),
                 () => {
-                    var promise = new Promise<Object>();
+                    var promise = new Promise<object>();
 
                     Task.Factory.StartNew(() => {
                         Thread.Sleep(100);

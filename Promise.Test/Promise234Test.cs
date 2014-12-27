@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
-using Ghost.Util;
+using CsPromise;
 
-namespace Ghost.Test
+namespace CsPromise.Test
 {
     /// <summary>
     ///이 클래스는 PromiseTest에 대한 테스트 클래스로서
@@ -94,7 +94,7 @@ namespace Ghost.Test
         [TestMethod()]
         public void FulfillPromiseIfXIsNotObjectOrFunction() {
             TestValue(0);
-            TestValue(new Object());
+            TestValue(new object());
             TestValue<String>(null);
             TestValue("test");
             TestValue(3m);
