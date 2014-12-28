@@ -124,9 +124,10 @@ namespace CsPromise.Test
                         .Then(result =>
                             Interlocked.Increment(ref resolvedCount)
                         );
-                }).ToList().ForEach(item => item.Wait());
+                })
+                .ToList()
+                .ForEach(item => item.Wait());
 
-            SetTimeout(() => Assert.AreEqual(count, resolvedCount), 50);
         }
 
         private Task<IPHostEntry> GetHostEntryTask(String host) {
@@ -154,8 +155,8 @@ namespace CsPromise.Test
                 .Select(item => GetHostEntryTask(host))
                 .ToList()
                 .ForEach(item => {
-                    Interlocked.Increment(ref resolvedCount);
                     item.Wait();
+                    Interlocked.Increment(ref resolvedCount);
                 });
         }
     }

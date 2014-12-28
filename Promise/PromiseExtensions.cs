@@ -14,6 +14,21 @@ namespace CsPromise {
     // and create member method for a specialized generic method.
     
     public static class PromiseExtensions {
+        internal static Func<object, object> GetNullOrConvertFunction<TArg, TResult>(
+    Func<TArg, TResult> func) {
+            if (func == null)
+                return null;
+
+            return (result) => func((TArg)result);
+        }
+
+        internal static Action<object> GetNullOrConvertFunction<TArg>(
+            Action<TArg> func) {
+            if (func == null)
+                return null;
+
+            return (result) => func((TArg)result);
+        }
 
         public static Promise<T> Catch<T>(
             this Promise thisPromise,
@@ -29,8 +44,8 @@ namespace CsPromise {
             var promise = new Promise<TOtherResult>();
 
             thisPromise.PostProcessedDone(promise,
-                Promise.GetNullOrConvertFunction(postProcessFulfilled),
-                Promise.GetNullOrConvertFunction(postProcessRejected)
+                GetNullOrConvertFunction(postProcessFulfilled),
+                GetNullOrConvertFunction(postProcessRejected)
             );
 
 
@@ -45,8 +60,8 @@ namespace CsPromise {
             var promise = new Promise<TOtherResult>();
 
             thisPromise.PostProcessedDone(promise,
-                Promise.GetNullOrConvertFunction(postProcessFulfilled),
-                Promise.GetNullOrConvertFunction(postProcessRejected));
+                GetNullOrConvertFunction(postProcessFulfilled),
+                GetNullOrConvertFunction(postProcessRejected));
 
             return promise;
         }

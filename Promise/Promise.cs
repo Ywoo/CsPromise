@@ -58,22 +58,6 @@ namespace CsPromise {
             DoneImpl(onFulfilled, onRejected);
         }
 
-        internal static Func<object, object> GetNullOrConvertFunction<TArg, TResult>(
-            Func<TArg, TResult> func) {
-            if (func == null)
-                return null;
-
-            return (result) => func((TArg)result);
-        }
-
-        internal static Action<object> GetNullOrConvertFunction<TArg>(
-            Action<TArg> func) {
-            if (func == null)
-                return null;
-
-            return (result) => func((TArg)result);
-        }
-
         internal void DoneImpl(Action<object> onFulfilled,
             Action<object> onRejected) {
 
@@ -270,6 +254,7 @@ namespace CsPromise {
                         this.Reject(exception);
                     }
                     catch {
+                        // TODO log the exception for debugging.
                     }
                 }
                 catch (Exception e) {
@@ -356,14 +341,18 @@ namespace CsPromise {
 
             if (parameterTypes.Length == 1) {
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<object>>)) {
+                        == typeof(Action<object>)) {
                     return new Promise(resolve
                         => thenMethod
                             .Invoke(target, new object[] { resolve }));
                 }
+            }
 
+            if(parameterTypes.Length == 2) {
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<object>, Action<Exception>>)) {
+                        == typeof(Action<object>) 
+                    && parameterTypes[1].ParameterType
+                        == typeof(Action<Exception>)) {
                     return new Promise((resolve, reject)
                         => thenMethod
                             .Invoke(target, new object[] { resolve, reject }));
@@ -407,8 +396,8 @@ namespace CsPromise {
             var promise = new Promise();
 
             PostProcessedDone(promise, 
-                GetNullOrConvertFunction(postProcessFulfilled), 
-                GetNullOrConvertFunction(postProcessRejected));
+                PromiseExtensions.GetNullOrConvertFunction(postProcessFulfilled),
+                PromiseExtensions.GetNullOrConvertFunction(postProcessRejected));
 
             return promise;
         }
@@ -420,8 +409,8 @@ namespace CsPromise {
             var promise = new Promise<TOtherResult>();
 
             PostProcessedDone(promise,
-                GetNullOrConvertFunction(postProcessFulfilled),
-                GetNullOrConvertFunction(postProcessRejected));
+                PromiseExtensions.GetNullOrConvertFunction(postProcessFulfilled),
+                PromiseExtensions.GetNullOrConvertFunction(postProcessRejected));
 
             return promise;
         }
