@@ -270,6 +270,7 @@ namespace CsPromise {
                         this.Reject(exception);
                     }
                     catch {
+                        // TODO log the exception for debugging.
                     }
                 }
                 catch (Exception e) {
@@ -356,14 +357,18 @@ namespace CsPromise {
 
             if (parameterTypes.Length == 1) {
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<object>>)) {
+                        == typeof(Action<object>)) {
                     return new Promise(resolve
                         => thenMethod
                             .Invoke(target, new object[] { resolve }));
                 }
+            }
 
+            if(parameterTypes.Length == 2) {
                 if (parameterTypes[0].ParameterType
-                        == typeof(Action<Action<object>, Action<Exception>>)) {
+                        == typeof(Action<object>) 
+                    && parameterTypes[1].ParameterType
+                        == typeof(Action<Exception>)) {
                     return new Promise((resolve, reject)
                         => thenMethod
                             .Invoke(target, new object[] { resolve, reject }));

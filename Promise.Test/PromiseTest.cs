@@ -808,9 +808,263 @@ namespace CsPromise.Test
             );
         }
 
-        // "2.2.4: `onFulfilled` or `onRejected` must not be called until the execution context stack contains only
-        // platform code.
-        //
-        // we did not support this.
+        [TestMethod()]
+        public void ResolveActionTest() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(resultObj);
+
+            var promiseReturn1 = promise.Then((result) => {
+                return (object) new Action<Action<object>>((resolved) => {
+                    resolved(1);
+                });
+            });
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(1, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void ResolveActionTest2() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(resultObj);
+
+            var promiseReturn1 = promise.Then((result) => {
+                return (object)new Action<Action<object>, Action<Exception>>(
+                    (resolved, rejected) => {
+                        resolved(1);
+                    }
+                );
+            });
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(1, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        class ThenObject {
+            public void Then(Action<Object> resolved) {
+                resolved(1);
+            }
+        }
+
+        [TestMethod()]
+        public void ResolveObjectTest() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promiseReturn1 = GetResolvedPromise<object>(new ThenObject());
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(1, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        class ThenObject2 {
+            public void Then(Action<Object> resolved, Action<Exception> rejected) {
+                resolved(1);
+            }
+        }
+
+        [TestMethod()]
+        public void ResolveObjectTest2() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promiseReturn1 = GetResolvedPromise<object>(new ThenObject2());
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(1, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        class InvalidThenObject {
+            public void Then(Action<Object> resolved, Action<Object> rejected) {
+                resolved(1);
+            }
+        }
+
+        [TestMethod()]
+        public void ResolveInvalidThenObjectTest() {
+            var thenWasCalled = false;
+            var resultObj = new InvalidThenObject();
+
+            var promise = GetResolvedPromise<object>(1);
+
+            var promiseReturn1 = promise.Then((result) => {
+                return resultObj;
+            });
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(resultObj, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void ThenGenericTest() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(2);
+
+            var promiseReturn1 = promise.Then((result) => {
+                return new Promise<int>((resolve, rejected) => {
+                    resolve(1);
+                });
+            });
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(1, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void ThenActionNullTest() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(2);
+
+            var promiseReturn1 = promise.Then(null);
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(2, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void ThenFuncNullResolveTest() {
+            var thenWasCalled = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(2);
+
+            var promiseReturn1 = promise.Then(null, exception => {
+                return 0;
+            });
+
+            Assert.IsTrue(promiseReturn1.Wait());
+
+            promiseReturn1.Then(result => {
+                Assert.AreEqual(2, result);
+                thenWasCalled = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(thenWasCalled);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void ThenFuncNullRejectedTest() {
+            var called = false;
+            var resultObj = new Exception();
+
+            var promise = GetRejectedPromise<object>(resultObj);
+
+            var promiseReturn1 = promise.Then((result) => 1, null);
+
+            Assert.IsFalse(promiseReturn1.Wait());
+
+            promiseReturn1.Then(null, exception => {
+                Assert.AreEqual(resultObj, exception);
+                called = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(called);
+            }, 50);
+        }
+
+        [TestMethod()]
+        public void DoneGenericResolvedTest() {
+            var called = false;
+            var resultObj = new object();
+
+            var promise = GetResolvedPromise<object>(2);
+
+            promise.Done(result => {
+                Assert.AreEqual(1, result);
+                called = true;
+            }, exception => {
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(called);
+            }, 100);
+        }
+
+        [TestMethod()]
+        public void DoneGenericRejectedTest() {
+            var called = false;
+            var rejectedException = new Exception();
+
+            var promise = GetRejectedPromise<object>(rejectedException );
+
+            promise.Done(result => {
+                
+            }, exception => {
+                Assert.AreEqual(rejectedException, exception);
+                called = true;
+            });
+
+            SetTimeout(() => {
+                Assert.IsTrue(called);
+            }, 50);
+        }
+
     }
 }
